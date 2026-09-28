@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCampus Interactive Map System</title>
+    <style>
+        :root {
+            --primary: #0E1B48; /* Navy Blue */
+            --secondary: #EAA816; /* Golden Yellow */
+            --bg-light: #f4f7f6;
+            --text-dark: #333;
+            --text-light: #fff;
+            
+            /* Bin Category Colors */
+            --recyclable: #27ae60;
+            --biodegradable: #8e44ad;
+            --residual: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.4s ease;
+            line-height: 1.6;
+        }
+
+        /* --- Dynamic Home Page Background --- */
+        body.home-bg {
+            background-image: linear-gradient(rgba(14, 27, 72, 0.8), rgba(14, 27, 72, 0.95)), url('https://i.imgur.com/RNbGTtq.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        body.home-bg #home .section-header h2 {
+            color: var(--secondary);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+        
+        body.home-bg #home .section-header p {
+            color: var(--text-light);
+            text-shadow: 0 2px 5px rgba(0,0,0,0.6);
+        }
+
+        /* --- Header & Navigation --- */
+        header {
+            background-color: var(--primary);
+            color: var(--text-light);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            letter-spacing: 1px;
+        }
+
+        .logo img {
+            height: 80px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 0.5rem 0;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 3px;
+            bottom: 0;
+            left: 0;
+            background: var(--secondary);
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--secondary);
+        }
+
+        nav a:hover::after, nav a.active::after {
+            width: 100%;
+        }
+
+        /* --- Main Layout --- */
+        main {
+            flex: 1;
+            padding: 2.5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .page-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in;
+            background: #fff;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        
+        body.home-bg .page-section#home {
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            color: var(--primary);
+            font-size: 2.8rem;
+            margin-bottom: 0.8rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 4px;
+            background: var(--secondary);
+            bottom: -10px;
+            left: 20%;
+            border-radius: 2px;
+        }
+
+        .section-header p {
+            color: #666;
+            font-size: 1.15rem;
+            max-width: 700px;
+            margin: 1rem auto 0;
+        }
+
+        /* --- Grids & Layouts --- */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        
+        .card {
+            background: var(--bg-light);
+            border-radius: 10px;
+            padding: 2rem;
+            border: 1px solid #eaeaea;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(14, 27, 72, 0.1);
+            border-color: var(--secondary);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .tag-success { background: #d4edda; color: #155724; }
+        .tag-ongoing { background: #cce5ff; color: #004085; }
+
+        /* --- Interactive Map Dashboard --- */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            min-height: 75vh;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        /* Control Panel (Sidebar) */
+        .control-panel {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .control-panel h3 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+        .form-group label { font-weight: 600; color: var(--primary); font-size: 0.95rem; }
+        .form-control {
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+        .form-control:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(234, 168, 22, 0.2);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn:hover { background: var(--secondary); color: var(--primary); }
+        .btn-secondary { background: var(--secondary); color: var(--primary); }
+        .btn-secondary:hover { background: var(--primary); color: #fff; }
+        .btn-block { width: 100%; }
+
+        /* Bin List UI */
+        .bin-list-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            max-height: 350px;
+        }
+
+        .bin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+        }
+        .bin-item:last-child { border-bottom: none; }
+
+        .bin-details strong { display: block; color: var(--primary); font-size: 0.95rem; }
+        .bin-details span { font-size: 0.8rem; color: #666; }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        .badge.recyclable { background-color: var(--recyclable); }
+        .badge.biodegradable { background-color: var(--biodegradable); }
+        .badge.residual { background-color: var(--residual); }
+
+        .delete-btn {
+            background: #ffebee;
+            color: var(--residual);
+            border: none;
+            border-radius: 4px;
+            padding: 0.4rem 0.6rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .delete-btn:hover { background: #ffcdd2; }
+
+        /* Map Area */
+        .map-wrapper {
+            position: relative;
+            border: 4px solid var(--primary);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #e9ecef;
+            width: 100%;
+        }
+        .map-image { width: 100%; height: auto; display: block; object-fit: contain; cursor: crosshair; }
+
+        .map-marker {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background-color: var(--secondary);
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary);
+            font-weight: 900;
+            font-size: 11px;
+        }
+        .map-marker::before { content: attr(data-label); }
+        .map-marker:hover, .map-marker.active {
+            transform: translate(-50%, -50%) scale(1.4);
+            background-color: var(--primary);
+            border-color: var(--secondary);
+            z-index: 20;
+        }
+        .map-marker .tooltip {
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            pointer-events: none;
+            font-weight: bold;
+        }
+        .map-marker:hover .tooltip, .map-marker.active .tooltip {
+            opacity: 1; visibility: visible; bottom: 150%;
+        }
+
+        .map-instructions {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.8rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 5;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* --- FAQ Accordion --- */
+        .faq-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        .faq-question {
+            background: var(--bg-light);
+            padding: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        .faq-question:hover { background: #e2e8f0; }
+        .faq-answer {
+            background: #fff;
+            padding: 0 1.2rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            color: #555;
+        }
+        .faq-item.active .faq-answer {
+            padding: 1.2rem;
+            max-height: 300px;
+            border-top: 1px solid #eee;
+        }
+        .faq-icon { font-size: 1.2rem; color: var(--secondary); font-weight: bold; transition: transform 0.3s; }
+        .faq-item.active .faq-icon { transform: rotate(45deg); color: var(--primary); }
+
+        /* --- News Blog --- */
+        .news-article {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+        .news-article:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .news-date { color: var(--secondary); font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .news-title { color: var(--primary); font-size: 1.6rem; margin-bottom: 1rem; }
+
+        /* --- Footer --- */
+        footer {
+            background: var(--primary);
+            color: #ccc;
+            text-align: center;
+            padding: 2rem;
+            margin-top: auto;
+            border-top: 4px solid var(--secondary);
+        }
+        footer p { margin-bottom: 0.5rem; }
+        footer strong { color: var(--secondary); }
+    </style>
+</head>
+<body class="home-bg">
+
+    <!-- Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo" onclick="navTo('home')">
+                <img src="https://i.imgur.com/YyRRmud.png" alt="EcoCampus Logo">
+                EcoCampus
+            </a>
+            <nav>
+                <ul id="nav-menu">
+                    <li><a class="active" onclick="navTo('home')">Map Dashboard</a></li>
+                    <li><a onclick="navTo('about')">About Us</a></li>
+                    <li><a onclick="navTo('services')">Services</a></li>
+                    <li><a onclick="navTo('products')">Products</a></li>
+                    <li><a onclick="navTo('portfolio')">Portfolio</a></li>
+                    <li><a onclick="navTo('news')">News</a></li>
+                    <li><a onclick="navTo('faq')">FAQ</a></li>
+                    <li><a onclick="navTo('contact')">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Home / Interactive Map Section -->
+        <section id="home" class="page-section active">
+            <div class="section-header">
+                <h2>Campus Waste Management Dashboard</h2>
+                <p>Select a building from the dropdown or click on the map to view and manage garbage bins.</p>
+            </div>
+
+            <div class="dashboard-container">
+                <!-- Sidebar Control Panel -->
+                <div class="control-panel">
+                    <h3>📍 Location Manager</h3>
+                    <div class="form-group">
+                        <label for="buildingSelect">Select Building / Area</label>
+                        <select id="buildingSelect" class="form-control" onchange="selectBuilding()">
+                            <option value="">-- Choose a location --</option>
+                        </select>
+                    </div>
+
+                    <div id="binManagerArea" style="display: none; flex-direction: column; gap: 1rem; flex: 1;">
+                        <!-- Image Container for specific buildings -->
+                        <div id="bldgImageContainer" style="display: none; width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            <img id="bldgImage" src="" alt="Building view" style="width: 100%; height: auto; display: block;">
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                            <label>Add New Bin to <span id="currentBldgName" style="color: var(--secondary);"></span></label>
+                            <select id="newBinType" class="form-control" style="margin-bottom: 0.5rem;">
+                                <option value="Recyclable">Recyclable (Green)</option>
+                                <option value="Biodegradable">Biodegradable (Brown)</option>
+                                <option value="Residual">Residual (Red)</option>
+                            </select>
+                            <input type="text" id="newBinDesc" class="form-control" placeholder="Specific location (e.g., 2nd Floor Lobby)" style="margin-bottom: 0.5rem;">
+                            <button class="btn btn-secondary btn-block" onclick="addBin()">+ Add Bin</button>
+                        </div>
+                        <label>Current Bins:</label>
+                        <div class="bin-list-wrapper" id="binListContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Interactive Map Area -->
+                <div class="map-wrapper">
+                    <div class="map-instructions">
+                        👆 Click anywhere on the map to register a new building/area!
+                    </div>
+                    <div id="mapContainer" style="position: relative; width: 100%; font-size: 0;">
+                        <!-- Reference to the requested map image -->
+                        <img src="https://i.imgur.com/Jnoo5iF.jpg" alt="Campus Map" class="map-image" id="campusMap" draggable="false">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Us Section -->
+        <section id="about" class="page-section">
+            <div class="section-header">
+                <h2>About EcoCampus</h2>
+                <p>Driving the sustainable future of Cagayan de Oro City through smart, student-led waste management.</p>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.8rem;">Our Mission</h3>
+                    <p style="margin-bottom: 1.5rem; text-align: justify;">The EcoCampus Waste Management Initiative was established to create a 100% sustainable and zero-waste university environment. By utilizing digital mapping technology, we empower students, faculty, and the administration to dispose of waste responsibly and track our environmental impact in real-time.</p>
+                    <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.8rem;">Our Vision</h3>
+                    <p style="text-align: justify;">We envision our university as the leading green institution in Northern Mindanao, serving as a model for urban sustainability where technology meets environmental consciousness.</p>
+                </div>
+                <div style="background: var(--bg-light); padding: 2rem; border-radius: 12px; border-left: 5px solid var(--secondary); display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="color: var(--primary); margin-bottom: 1.5rem; text-align: center;">Impact Since 2024</h3>
+                    <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 1.5rem;">
+                        <div>
+                            <div style="font-size: 2.5rem; font-weight: bold; color: var(--secondary);">3.2k</div>
+                            <div style="font-size: 0.9rem; color: #666;">Bins Mapped</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2.5rem; font-weight: bold; color: var(--secondary);">15k</div>
+                            <div style="font-size: 0.9rem; color: #666;">Active Users</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2.5rem; font-weight: bold; color: var(--secondary);">85%</div>
+                            <div style="font-size: 0.9rem; color: #666;">Recycling Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="page-section">
+            <div class="section-header">
+                <h2>Our Services</h2>
+                <p>Comprehensive environmental solutions tailored for modern educational institutions.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon">🗺️</div>
+                    <h3>Waste Mapping & Monitoring</h3>
+                    <p>Real-time digital plotting of all Recyclable, Biodegradable, and Residual bins across the campus, allowing anyone to find the nearest appropriate disposal unit.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🚛</div>
+                    <h3>Routing Optimization</h3>
+                    <p>Providing janitorial and auxiliary staff with optimized collection routes based on high-traffic areas, reducing carbon footprint and labor time.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📊</div>
+                    <h3>Sustainability Audits</h3>
+                    <p>Monthly data reports generated from bin usage to help departments understand their waste generation and improve segregation compliance.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="page-section">
+            <div class="section-header">
+                <h2>Eco-Products</h2>
+                <p>Support our initiatives by utilizing our official sustainable merchandise and tools.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card" style="text-align: center;">
+                    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee; font-size: 4rem;">🗑️</div>
+                    <h3>Smart Segregation Bin Set</h3>
+                    <p style="margin-bottom: 1.5rem;">Standard 3-piece color-coded bin set (Green, Brown, Red) designed for classrooms and faculty offices.</p>
+                    <button class="btn btn-secondary btn-block" onclick="alert('Added to inquiry cart!')">Request for Dept.</button>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee; font-size: 4rem;">🛍️</div>
+                    <h3>Upcycled Canvas Tote</h3>
+                    <p style="margin-bottom: 1.5rem;">Durable tote bags made from recycled university banners. Perfect for replacing single-use plastics.</p>
+                    <button class="btn btn-block" onclick="alert('Redirecting to Student Center Store...')">Buy Now (₱150)</button>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee; font-size: 4rem;">🌱</div>
+                    <h3>Campus Compost Fertilizer</h3>
+                    <p style="margin-bottom: 1.5rem;">Organic fertilizer generated purely from the campus cafeteria's biodegradable waste. Ideal for gardening.</p>
+                    <button class="btn btn-block" onclick="alert('Redirecting to Agriculture Dept...')">Get a Free Sample</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio / Projects Section -->
+        <section id="portfolio" class="page-section">
+            <div class="section-header">
+                <h2>Projects & Portfolio</h2>
+                <p>Milestones and active campaigns driving our university to zero-waste.</p>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <span class="tag tag-success">Completed • Jan 2026</span>
+                    <h3>Bitan-ag Creek Clean-up Drive</h3>
+                    <p>A massive student-led initiative that successfully removed over 2 tons of residual waste from the creek bordering the campus. This project was conducted in partnership with the CDO local government.</p>
+                </div>
+                <div class="card">
+                    <span class="tag tag-success">Completed • May 2026</span>
+                    <h3>Zero-Waste Intramurals 2026</h3>
+                    <p>Deployed 50 temporary segregation stations mapped live on the EcoCampus app, resulting in a 90% reduction of scattered litter compared to the previous sports season.</p>
+                </div>
+                <div class="card">
+                    <span class="tag tag-ongoing">Ongoing Phase 2</span>
+                    <h3>Solar-Powered Smart Bins</h3>
+                    <p>Currently piloting self-compacting, solar-powered garbage bins at the Open Field and Student Lounge to prevent overflow during peak hours.</p>
+                </div>
+                <div class="card">
+                    <span class="tag tag-ongoing">Continuous Integration</span>
+                    <h3>Cafeteria Biodegradable Conversion</h3>
+                    <p>A continuous partnership with food concessionaires to ensure 100% of organic food waste is diverted to the university's central composting facility.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- News / Blog Section -->
+        <section id="news" class="page-section">
+            <div class="section-header">
+                <h2>EcoCampus News</h2>
+                <p>The latest updates, tips, and announcements regarding campus sustainability.</p>
+            </div>
+            <div style="max-width: 900px; margin: 0 auto; background: var(--bg-light); padding: 2rem; border-radius: 12px; border: 1px solid #eaeaea;">
+                
+                <div class="news-article">
+                    <span class="news-date">September 25, 2026</span>
+                    <h3 class="news-title">How to Properly Segregate During the Upcoming Finals Week</h3>
+                    <p>With finals week approaching, campus coffee consumption is at an all-time high. Please remember that paper cups with plastic linings go to the <strong>Residual (Red)</strong> bins, while empty and rinsed plastic bottles belong in the <strong>Recyclable (Green)</strong> bins. Let's keep the study lounges clean!</p>
+                </div>
+
+                <div class="news-article">
+                    <span class="news-date">September 20, 2026</span>
+                    <h3 class="news-title">EcoCampus Map Version 2.0 Officially Launches</h3>
+                    <p>We are thrilled to release the newly updated interactive map. Students can now drop custom pins on the map to register unmapped garbage bins. Help us crowd-source our campus infrastructure to ensure janitorial staff know exactly where waste is being collected.</p>
+                </div>
+
+                <div class="news-article">
+                    <span class="news-date">August 15, 2026</span>
+                    <h3 class="news-title">Cagayan de Oro City Recognizes University's Zero-Waste Effort</h3>
+                    <p>The CDO City Environment and Natural Resources Office (CLENRO) awarded our university the "Green Innovator of the Year" for our digital tracking system, marking a huge win for student-led environmental tech.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="page-section">
+            <div class="section-header">
+                <h2>Frequently Asked Questions</h2>
+                <p>Quick answers to common waste management queries on campus.</p>
+            </div>
+            <div style="max-width: 800px; margin: 0 auto;">
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What exactly goes into the Recyclable (Green) bin?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Only clean, dry, and recyclable materials. This includes plastic bottles (PET), aluminum cans, dry paper, and cardboard. <strong>Note:</strong> Please empty all liquids from bottles before throwing them away to prevent contamination!</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>I found a garbage bin that isn't on the map. What should I do?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>You can add it yourself! Go to the Map Dashboard, click on the exact location on the campus map to register the area, and use the "Add New Bin" form on the left panel to specify the bin type and its specific location.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What goes into the Residual (Red) bin?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Residual waste is anything that cannot be recycled or composted. This includes candy wrappers, soiled food packaging, sanitary napkins, wet wipes, and single-use sachets.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Who manages the collection of these bins?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>The University Auxiliary Services handles the physical collection. Data from this map helps them prioritize areas with high waste generation. Bins in high-traffic zones are emptied twice a day.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="page-section">
+            <div class="section-header">
+                <h2>Contact Us</h2>
+                <p>Report a full bin, request a new setup, or partner with us for environmental drives.</p>
+            </div>
+            <div class="grid-2" style="max-width: 1000px; margin: 0 auto;">
+                
+                <!-- Contact Info -->
+                <div style="background: var(--primary); color: #fff; padding: 2.5rem; border-radius: 12px; display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="color: var(--secondary); margin-bottom: 1.5rem; font-size: 1.8rem;">Get in Touch</h3>
+                    <p style="margin-bottom: 1.5rem;">Have questions about waste segregation or want to report an issue with the map? Our team is ready to help.</p>
+                    
+                    <div style="margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 15px;">
+                        <span style="font-size: 1.5rem;">📍</span>
+                        <div>
+                            <strong>Office Address:</strong><br>
+                            EcoCampus Headquarters, Student Center Bldg,<br>
+                            Claro M. Recto Avenue, Lapasan,<br>
+                            Cagayan de Oro City, 9000<br>
+                            Northern Mindanao, Philippines
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem;">📧</span>
+                        <div>
+                            <strong>Email:</strong><br>
+                            support@ecocampus.edu.ph
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem;">📞</span>
+                        <div>
+                            <strong>Hotline (Auxiliary Services):</strong><br>
+                            (088) 856-1234 loc 555
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div style="background: var(--bg-light); padding: 2.5rem; border-radius: 12px; border: 1px solid #eaeaea;">
+                    <form onsubmit="event.preventDefault(); alert('Your message has been sent successfully! We will get back to you soon.'); this.reset();">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" class="form-control" required placeholder="Juan Dela Cruz">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" class="form-control" required placeholder="juan@university.edu.ph">
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <select id="subject" class="form-control">
+                                <option>Report Full/Damaged Bin</option>
+                                <option>Request Bin Allocation</option>
+                                <option>Map System Bug/Feedback</option>
+                                <option>Partnerships / Drives</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label for="message">Message</label>
+                            <textarea id="message" class="form-control" rows="5" required placeholder="Describe your concern here..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-block" style="font-size: 1.1rem; padding: 1rem;">Send Message</button>
+                    </form>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><strong>EcoCampus Integrated Systems</strong> | Cagayan de Oro City, Northern Mindanao</p>
+        <p>&copy; 2026 University Auxiliary Services. Promoting a greener tomorrow.</p>
+    </footer>
+
+    <script>
+        // --- Navigation Logic ---
+        function navTo(sectionId) {
+            // Update Active Link
+            document.querySelectorAll('#nav-menu a').forEach(a => a.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Switch Sections
+            document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Toggle dynamic background for home page
+            if(sectionId === 'home') {
+                document.body.classList.add('home-bg');
+            } else {
+                document.body.classList.remove('home-bg');
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- FAQ Accordion Logic ---
+        function toggleFaq(element) {
+            const parent = element.parentElement;
+            // Close all others
+            document.querySelectorAll('.faq-item').forEach(item => {
+                if(item !== parent) item.classList.remove('active');
+            });
+            // Toggle current
+            parent.classList.toggle('active');
+        }
+
+        // --- Data Structure for Buildings and Bins ---
+        let mapData = {
+            "bldg_1": { name: "BLDG. 1 Arts and Culture", label: "1", x: 92.2, y: 38.2, bins: [{ id: 1, type: "Recyclable", desc: "Main Entrance Lobby" }] },
+            "bldg_2": { name: "BLDG. 2 Guidance and Testing Center", label: "2", x: 88.6, y: 35.6, bins: [] },
+            "bldg_3": { name: "BLDG. 3 College of Medicine", label: "3", x: 86.7, y: 41.7, bins: [] },
+            "bldg_5": { name: "BLDG. 5 Old Engineering Building", label: "5", x: 75.9, y: 46.8, bins: [] },
+            "bldg_6": { name: "BLDG. 6", label: "6", x: 89.8, y: 44.5, bins: [] },
+            "bldg_9": { name: "BLDG. 9 ICT Building", label: "9", x: 70.8, y: 35.2, bins: [] },
+            "bldg_10": { name: "BLDG. 10 Administration Building", label: "10", x: 67.9, y: 41.6, bins: [] },
+            "bldg_14": { name: "BLDG. 14 Finance and Accounting", label: "14", x: 60.1, y: 35.6, bins: [] },
+            "bldg_15": { name: "BLDG. 15 Gymnasium Lobby", label: "15", x: 52.3, y: 39.8, bins: [] },
+            "bldg_16": { name: "BLDG. 16 Gymnasium / Drer Memorial", label: "16", x: 56.1, y: 44.8, bins: [] },
+            "bldg_18": { name: "BLDG. 18 Culinary Building", label: "18", x: 65.9, y: 54.4, bins: [] },
+            "bldg_19": { name: "BLDG. 19 NSTP Building", label: "19", x: 67.3, y: 61.1, image: "https://ibb.co/V05yR9kV", bins: [{ id: 101, type: "Recyclable", desc: "Front Entrance" }, { id: 102, type: "Residual", desc: "Front Entrance" }, { id: 103, type: "Biodegradable", desc: "Front Entrance" }] },
+            "bldg_20": { name: "BLDG. 20 Cafeteria", label: "20", x: 57.6, y: 59.5, bins: [{ id: 3, type: "Biodegradable", desc: "Cafeteria Exit" }] },
+            "bldg_21": { name: "BLDG. 21 Guard House", label: "21", x: 50.2, y: 63.9, bins: [] },
+            "bldg_23": { name: "BLDG. 23 Learning Resource Center", label: "23", x: 37.1, y: 28.1, bins: [] },
+            "bldg_24": { name: "BLDG. 24 Girl's Trade Building", label: "24", x: 29.6, y: 34.4, bins: [] },
+            "bldg_25": { name: "BLDG. 25 Food Innovation Center", label: "25", x: 38.8, y: 37.2, bins: [] },
+            "bldg_26": { name: "BLDG. 26 Food Innovation Center", label: "26", x: 42.3, y: 32.8, bins: [] },
+            "bldg_27": { name: "BLDG. 27 OSA", label: "27", x: 34.6, y: 41.3, bins: [] },
+            "bldg_28": { name: "BLDG. 28 Old Science Building", label: "28", x: 40.5, y: 43.7, bins: [] },
+            "bldg_35": { name: "BLDG. 35 Old Education Building", label: "35", x: 25.9, y: 44.7, bins: [] },
+            "bldg_36": { name: "BLDG. 36 Old Student Center", label: "36", x: 23.4, y: 38.6, bins: [] },
+            "bldg_41": { name: "BLDG. 41 Science Complex", label: "41", x: 43.7, y: 48.8, bins: [] },
+            "bldg_42": { name: "BLDG. 42 Eng. Complex I", label: "42", x: 63.8, y: 65.0, bins: [] },
+            "bldg_43": { name: "BLDG. 43 Eng. Complex II", label: "43", x: 57.5, y: 65.6, bins: [] },
+            "bldg_44": { name: "BLDG. 44 Student Center Complex", label: "44", x: 37.5, y: 59.3, bins: [{ id: 4, type: "Recyclable", desc: "Near Vending Machines" }, { id: 5, type: "Biodegradable", desc: "Food Stalls" }] },
+            "bldg_45": { name: "BLDG. 45 Mech. Lab Shop", label: "45", x: 20, y: 30.3, bins: [] },
+            "bldg_47": { name: "BLDG. 47 Technology Building", label: "47", x: 28.3, y: 23.6, bins: [] },
+            "bldg_51": { name: "BLDG. 51 Dormitory", label: "51", x: 44.4, y: 15.1, bins: [] },
+            "bldg_52": { name: "BLDG. 52 Fab Lab Building", label: "52", x: 19.0, y: 23.9, bins: [] },
+            "open_field": { name: "Open Field / Sports Zone", label: "OF", x: 52.2, y: 27.4, bins: [{ id: 6, type: "Recyclable", desc: "Bleachers Left" }] }
+        };
+
+        const mapContainer = document.getElementById('mapContainer');
+        const campusMapImg = document.getElementById('campusMap');
+        const buildingSelect = document.getElementById('buildingSelect');
+        const binManagerArea = document.getElementById('binManagerArea');
+        const bldgImageContainer = document.getElementById('bldgImageContainer');
+        const bldgImage = document.getElementById('bldgImage');
+        const binListContainer = document.getElementById('binListContainer');
+        const currentBldgName = document.getElementById('currentBldgName');
+
+        // --- Initialization ---
+        function initMap() {
+            document.body.classList.add('home-bg'); 
+            updateDropdown();
+            renderAllMarkers();
+        }
+
+        // --- Dropdown Management ---
+        function updateDropdown() {
+            buildingSelect.innerHTML = '<option value="">-- Choose a location --</option>';
+            
+            const sortedKeys = Object.keys(mapData).sort((a, b) => 
+                mapData[a].name.localeCompare(mapData[b].name)
+            );
+
+            sortedKeys.forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = mapData[key].name;
+                buildingSelect.appendChild(opt);
+            });
+        }
+
+        function selectBuilding() {
+            const selectedId = buildingSelect.value;
+            
+            document.querySelectorAll('.map-marker').forEach(m => m.classList.remove('active'));
+
+            if (!selectedId) {
+                binManagerArea.style.display = 'none';
+                return;
+            }
+
+            const marker = document.getElementById(`marker_${selectedId}`);
+            if (marker) marker.classList.add('active');
+
+            binManagerArea.style.display = 'flex';
+            currentBldgName.textContent = mapData[selectedId].name;
+            
+            // Handle specific building image display
+            if (mapData[selectedId].image) {
+                bldgImage.src = mapData[selectedId].image;
+                bldgImageContainer.style.display = 'block';
+            } else {
+                bldgImageContainer.style.display = 'none';
+                bldgImage.src = '';
+            }
+            
+            renderBinList(selectedId);
+        }
+
+        // --- Marker Rendering ---
+        function renderAllMarkers() {
+            document.querySelectorAll('.map-marker').forEach(m => m.remove());
+
+            Object.keys(mapData).forEach(key => {
+                const bldg = mapData[key];
+                const marker = document.createElement('div');
+                marker.className = 'map-marker';
+                marker.id = `marker_${key}`;
+                marker.style.left = `${bldg.x}%`;
+                marker.style.top = `${bldg.y}%`;
+                marker.setAttribute('data-label', bldg.label);
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = bldg.name;
+                marker.appendChild(tooltip);
+
+                marker.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    buildingSelect.value = key;
+                    selectBuilding();
+                });
+
+                mapContainer.appendChild(marker);
+            });
+        }
+
+        // --- Add New Building by Clicking Map ---
+        campusMapImg.addEventListener('click', function(e) {
+            const rect = campusMapImg.getBoundingClientRect();
+            const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+            const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+
+            const bldgName = prompt("Register a new Building or Area. Enter name:");
+            if (!bldgName || bldgName.trim() === "") return;
+
+            const newId = 'loc_' + Date.now();
+            mapData[newId] = {
+                name: bldgName.trim(),
+                label: bldgName.trim().substring(0, 2).toUpperCase(), // Use first 2 letters as label
+                x: xPercent,
+                y: yPercent,
+                bins: []
+            };
+
+            updateDropdown();
+            renderAllMarkers();
+            
+            buildingSelect.value = newId;
+            selectBuilding();
+        });
+
+        // --- Bin Management ---
+        function renderBinList(buildingId) {
+            binListContainer.innerHTML = '';
+            const bins = mapData[buildingId].bins;
+
+            if (bins.length === 0) {
+                binListContainer.innerHTML = '<p style="text-align:center; color:#888; font-style:italic; margin-top:2rem;">No bins recorded yet. Add one above.</p>';
+                return;
+            }
+
+            bins.forEach(bin => {
+                const item = document.createElement('div');
+                item.className = 'bin-item';
+                
+                const badgeClass = bin.type.toLowerCase();
+                
+                item.innerHTML = `
+                    <div class="bin-details">
+                        <strong>${bin.desc}</strong>
+                        <span class="badge ${badgeClass}">${bin.type}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteBin('${buildingId}', ${bin.id})" title="Remove Bin">✖</button>
+                `;
+                binListContainer.appendChild(item);
+            });
+        }
+
+        function addBin() {
+            const buildingId = buildingSelect.value;
+            const type = document.getElementById('newBinType').value;
+            const descInput = document.getElementById('newBinDesc');
+            const desc = descInput.value.trim();
+
+            if (!buildingId) {
+                alert("Please select a building first.");
+                return;
+            }
+
+            if (!desc) {
+                alert("Please provide a specific location description for the bin.");
+                return;
+            }
+
+            const newBin = {
+                id: Date.now(),
+                type: type,
+                desc: desc
+            };
+
+            mapData[buildingId].bins.push(newBin);
+            descInput.value = ''; 
+            
+            renderBinList(buildingId);
+        }
+
+        function deleteBin(buildingId, binId) {
+            if(confirm("Are you sure you want to remove this bin record?")) {
+                mapData[buildingId].bins = mapData[buildingId].bins.filter(b => b.id !== binId);
+                renderBinList(buildingId);
+            }
+        }
+
+        window.onload = initMap;
+
+    </script>
+</body>
+</html>
