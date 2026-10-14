@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>EcoCampus Interactive Map System</title>
     <style>
         :root {
@@ -33,6 +33,8 @@
             min-height: 100vh;
             transition: background-color 0.4s ease;
             line-height: 1.6;
+            /* Extra padding on bottom for mobile bottom nav */
+            padding-bottom: 0; 
         }
 
         /* --- Dynamic Home Page Background --- */
@@ -92,14 +94,32 @@
             border-radius: 4px;
         }
 
-        nav ul {
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            cursor: pointer;
+            z-index: 1001;
+            padding: 10px;
+        }
+        .menu-toggle span {
+            display: block;
+            width: 30px;
+            height: 3px;
+            background: var(--text-light);
+            border-radius: 3px;
+            transition: 0.3s all ease;
+        }
+
+        nav.desktop-nav ul {
             list-style: none;
             display: flex;
             gap: 1.5rem;
             flex-wrap: wrap;
         }
 
-        nav a {
+        nav.desktop-nav a {
             color: var(--text-light);
             text-decoration: none;
             font-weight: 600;
@@ -110,7 +130,7 @@
             transition: color 0.3s;
         }
 
-        nav a::after {
+        nav.desktop-nav a::after {
             content: '';
             position: absolute;
             width: 0;
@@ -121,15 +141,47 @@
             transition: width 0.3s ease;
         }
 
-        nav a:hover, nav a.active {
+        nav.desktop-nav a:hover, nav.desktop-nav a.active {
             color: var(--secondary);
         }
 
-        nav a:hover::after, nav a.active::after {
+        nav.desktop-nav a:hover::after, nav.desktop-nav a.active::after {
             width: 100%;
         }
 
-        /* --- Main Layout --- */
+        /* --- Mobile Bottom Navigation --- */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            justify-content: space-around;
+            padding: 0.6rem 0;
+            padding-bottom: env(safe-area-inset-bottom, 0.6rem); /* iOS Safe Area */
+        }
+
+        .mobile-bottom-nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s;
+            gap: 4px;
+        }
+
+        .mobile-bottom-nav a span { font-size: 1.3rem; }
+        .mobile-bottom-nav a.active, .mobile-bottom-nav a:hover { color: var(--secondary); }
+        .mobile-bottom-nav a.active span { transform: scale(1.1); }
+
+        /* --- Main Layout & Fluid Grids --- */
         main {
             flex: 1;
             padding: 2.5rem 2rem;
@@ -148,393 +200,184 @@
             margin-bottom: 2rem;
         }
         
-        body.home-bg .page-section#home {
-            background: transparent;
-            box-shadow: none;
-            padding: 0;
-        }
-
-        .page-section.active {
-            display: block;
-        }
+        body.home-bg .page-section#home { background: transparent; box-shadow: none; padding: 0; }
+        .page-section.active { display: block; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .section-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-header h2 { color: var(--primary); font-size: clamp(2rem, 5vw, 2.8rem); margin-bottom: 0.8rem; position: relative; display: inline-block; }
+        .section-header h2::after { content: ''; position: absolute; width: 60%; height: 4px; background: var(--secondary); bottom: -10px; left: 20%; border-radius: 2px; }
+        .section-header p { color: #666; font-size: 1.15rem; max-width: 700px; margin: 1rem auto 0; }
 
-        .section-header h2 {
-            color: var(--primary);
-            font-size: 2.8rem;
-            margin-bottom: 0.8rem;
-            position: relative;
-            display: inline-block;
-        }
+        /* Fluid Grids using minmax constraints to prevent mobile overflow */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 2rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 2rem; }
         
-        .section-header h2::after {
-            content: '';
-            position: absolute;
-            width: 60%;
-            height: 4px;
-            background: var(--secondary);
-            bottom: -10px;
-            left: 20%;
-            border-radius: 2px;
-        }
+        .card { background: var(--bg-light); border-radius: 10px; padding: 2rem; border: 1px solid #eaeaea; transition: transform 0.3s, box-shadow 0.3s; position: relative; overflow: hidden; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(14, 27, 72, 0.1); border-color: var(--secondary); }
+        .card-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--primary); }
+        .card h3 { color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem; }
 
-        .section-header p {
-            color: #666;
-            font-size: 1.15rem;
-            max-width: 700px;
-            margin: 1rem auto 0;
-        }
-
-        /* --- Grids & Layouts --- */
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
-        
-        .card {
-            background: var(--bg-light);
-            border-radius: 10px;
-            padding: 2rem;
-            border: 1px solid #eaeaea;
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(14, 27, 72, 0.1);
-            border-color: var(--secondary);
-        }
-
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .card h3 {
-            color: var(--primary);
-            margin-bottom: 1rem;
-            font-size: 1.4rem;
-        }
-
-        .tag {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-        }
+        .tag { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-bottom: 1rem; }
         .tag-success { background: #d4edda; color: #155724; }
         .tag-ongoing { background: #cce5ff; color: #004085; }
 
         /* --- Interactive Map Dashboard --- */
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 2rem;
-            background: #fff;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            min-height: 75vh;
-        }
-
-        @media (max-width: 992px) {
-            .dashboard-container { grid-template-columns: 1fr; }
-            .grid-2, .grid-3 { grid-template-columns: 1fr; }
-        }
+        .dashboard-container { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); min-height: 75vh; }
 
         /* Control Panel (Sidebar) */
-        .control-panel {
-            background: var(--bg-light);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .control-panel h3 {
-            color: var(--primary);
-            border-bottom: 2px solid var(--secondary);
-            padding-bottom: 0.5rem;
-        }
+        .control-panel { background: var(--bg-light); padding: 1.5rem; border-radius: 8px; border: 1px solid #e0e0e0; display: flex; flex-direction: column; gap: 1.5rem; }
+        .control-panel h3 { color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 0.5rem; }
 
         .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
         .form-group label { font-weight: 600; color: var(--primary); font-size: 0.95rem; }
-        .form-control {
-            padding: 0.8rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-            background: #fff;
-            outline: none;
-            transition: border-color 0.2s;
-            width: 100%;
-        }
-        .form-control:focus {
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 2px rgba(234, 168, 22, 0.2);
-        }
+        
+        /* iOS Input Fix: 16px minimum font size prevents auto-zoom on mobile */
+        .form-control { padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; background: #fff; outline: none; transition: border-color 0.2s; width: 100%; }
+        .form-control:focus { border-color: var(--secondary); box-shadow: 0 0 0 2px rgba(234, 168, 22, 0.2); }
 
-        .btn {
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            display: inline-block;
-            text-decoration: none;
-        }
+        .btn { background: var(--primary); color: #fff; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; display: inline-block; text-decoration: none; font-size: 16px;}
         .btn:hover { background: var(--secondary); color: var(--primary); }
         .btn-secondary { background: var(--secondary); color: var(--primary); }
         .btn-secondary:hover { background: var(--primary); color: #fff; }
         .btn-block { width: 100%; }
 
         /* Bin List UI */
-        .bin-list-wrapper {
-            flex: 1;
-            overflow-y: auto;
-            background: #fff;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            padding: 1rem;
-            max-height: 350px;
-        }
-
-        .bin-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.8rem;
-            border-bottom: 1px solid #eee;
-        }
+        .bin-list-wrapper { flex: 1; overflow-y: auto; background: #fff; border-radius: 6px; border: 1px solid #ddd; padding: 1rem; max-height: 350px; }
+        .bin-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #eee; }
         .bin-item:last-child { border-bottom: none; }
-
         .bin-details strong { display: block; color: var(--primary); font-size: 0.95rem; }
         .bin-details span { font-size: 0.8rem; color: #666; }
 
-        .badge {
-            padding: 0.25rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: #fff;
-            text-transform: uppercase;
-        }
+        .badge { padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: bold; color: #fff; text-transform: uppercase; }
         .badge.recyclable { background-color: var(--recyclable); }
         .badge.biodegradable { background-color: var(--biodegradable); }
         .badge.residual { background-color: var(--residual); }
 
-        .delete-btn {
-            background: #ffebee;
-            color: var(--residual);
-            border: none;
-            border-radius: 4px;
-            padding: 0.4rem 0.6rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .delete-btn:hover { background: #ffcdd2; }
-
-        /* Map Area */
-        .map-wrapper {
-            position: relative;
-            border: 4px solid var(--primary);
-            border-radius: 12px;
-            overflow: hidden;
-            background: #e9ecef;
-            width: 100%;
-        }
+        /* Map Area & Panning */
+        .map-outer-wrapper { position: relative; border: 4px solid var(--primary); border-radius: 12px; overflow: hidden; background: #e9ecef; width: 100%; height: 600px; display: flex; flex-direction: column; }
+        
+        .map-scroll-area { flex: 1; overflow: auto; width: 100%; height: 100%; position: relative; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        
+        /* Map zoom container */
+        #mapContainer { position: relative; width: 100%; min-width: 100%; transform-origin: top left; transition: width 0.3s ease; }
+        
         .map-image { width: 100%; height: auto; display: block; object-fit: contain; cursor: crosshair; }
 
-        .map-marker {
-            position: absolute;
-            width: 28px;
-            height: 28px;
-            background-color: var(--secondary);
-            border: 3px solid var(--primary);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-            z-index: 10;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--primary);
-            font-weight: 900;
-            font-size: 11px;
-        }
+        /* Map Zoom Controls */
+        .map-controls { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
+        .zoom-btn { background: #fff; color: var(--primary); border: 2px solid var(--primary); width: 40px; height: 40px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .zoom-btn:hover { background: var(--secondary); color: var(--primary); }
+
+        /* Map Markers */
+        .map-marker { position: absolute; width: 28px; height: 28px; background-color: var(--secondary); border: 3px solid var(--primary); border-radius: 50%; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; justify-content: center; align-items: center; color: var(--primary); font-weight: 900; font-size: 11px; }
+        
+        /* Enlarge touch targets on markers invisibly to avoid misclicks */
+        .map-marker::after { content: ''; position: absolute; top: -15px; right: -15px; bottom: -15px; left: -15px; border-radius: 50%; }
         .map-marker::before { content: attr(data-label); }
-        .map-marker:hover, .map-marker.active {
-            transform: translate(-50%, -50%) scale(1.4);
-            background-color: var(--primary);
-            border-color: var(--secondary);
-            z-index: 20;
-        }
-        .map-marker .tooltip {
-            position: absolute;
-            bottom: 130%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--primary);
-            color: #fff;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            pointer-events: none;
-            font-weight: bold;
-        }
-        .map-marker:hover .tooltip, .map-marker.active .tooltip {
-            opacity: 1; visibility: visible; bottom: 150%;
-        }
+        .map-marker:hover, .map-marker.active { transform: translate(-50%, -50%) scale(1.4); background-color: var(--primary); border-color: var(--secondary); z-index: 20; }
+        
+        .map-marker .tooltip { position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: var(--primary); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s ease; pointer-events: none; font-weight: bold; }
+        .map-marker:hover .tooltip, .map-marker.active .tooltip { opacity: 1; visibility: visible; bottom: 150%; }
 
-        .map-instructions {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 0.8rem;
-            border-radius: 6px;
-            border-left: 4px solid var(--secondary);
-            font-size: 0.9rem;
-            font-weight: 600;
-            z-index: 5;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+        /* --- Utilities & Add-ons --- */
+        .map-instructions { position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.95); padding: 0.8rem; border-radius: 6px; border-left: 4px solid var(--secondary); font-size: 0.9rem; font-weight: 600; z-index: 5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
-        /* --- FAQ Accordion --- */
-        .faq-item {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
-        .faq-question {
-            background: var(--bg-light);
-            padding: 1.2rem;
-            font-weight: bold;
-            color: var(--primary);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.3s;
-        }
+        .faq-item { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; overflow: hidden; }
+        .faq-question { background: var(--bg-light); padding: 1.2rem; font-weight: bold; color: var(--primary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
         .faq-question:hover { background: #e2e8f0; }
-        .faq-answer {
-            background: #fff;
-            padding: 0 1.2rem;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-            color: #555;
-        }
-        .faq-item.active .faq-answer {
-            padding: 1.2rem;
-            max-height: 300px;
-            border-top: 1px solid #eee;
-        }
+        .faq-answer { background: #fff; padding: 0 1.2rem; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; color: #555; }
+        .faq-item.active .faq-answer { padding: 1.2rem; max-height: 300px; border-top: 1px solid #eee; }
         .faq-icon { font-size: 1.2rem; color: var(--secondary); font-weight: bold; transition: transform 0.3s; }
         .faq-item.active .faq-icon { transform: rotate(45deg); color: var(--primary); }
 
-        /* --- News Blog --- */
-        .news-article {
-            display: flex;
-            flex-direction: column;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 2rem;
-            margin-bottom: 2rem;
-        }
-        .news-article:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .news-date { color: var(--secondary); font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; }
-        .news-title { color: var(--primary); font-size: 1.6rem; margin-bottom: 1rem; }
-
-        /* --- Lightbox & Gallery --- */
-        .lightbox-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease;
-        }
-        .lightbox-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .lightbox-img {
-            max-width: 90%;
-            max-height: 90vh;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        .lightbox-overlay.active .lightbox-img {
-            transform: scale(1);
-        }
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            color: #fff;
-            font-size: 40px;
-            cursor: pointer;
-            font-family: Arial, sans-serif;
-            transition: color 0.2s;
-        }
+        /* Lightbox */
+        .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+        .lightbox-overlay.active { opacity: 1; visibility: visible; }
+        .lightbox-img { max-width: 90%; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.3s ease; }
+        .lightbox-overlay.active .lightbox-img { transform: scale(1); }
+        .lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; font-family: Arial, sans-serif; transition: color 0.2s; }
         .lightbox-close:hover { color: var(--secondary); }
 
-        /* --- Footer --- */
-        footer {
-            background: var(--primary);
-            color: #ccc;
+        /* Toast Notifications (replaces alert) */
+        .toast-notification {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--primary);
+            color: #fff;
             text-align: center;
-            padding: 2rem;
-            margin-top: auto;
-            border-top: 4px solid var(--secondary);
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 10000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            font-weight: bold;
+            font-size: 1rem;
+            border-left: 5px solid var(--secondary);
         }
+        .toast-notification.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        /* Mobile Breakpoints & UI Tweaks */
+        @media (max-width: 992px) {
+            .dashboard-container { display: flex; flex-direction: column; }
+            .map-outer-wrapper { order: -1; margin-bottom: 1rem; height: 400px;}
+            .control-panel { order: 1; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding-bottom: 70px; /* Make room for bottom nav */ }
+            .menu-toggle { display: flex; }
+            nav.desktop-nav ul {
+                display: none; flex-direction: column; position: absolute; top: 100%; left: 0; width: 100%; background: var(--primary); padding: 1rem 0; box-shadow: 0 10px 10px rgba(0,0,0,0.25); gap: 0;
+            }
+            nav.desktop-nav ul.show { display: flex; }
+            nav.desktop-nav a { padding: 1rem 2rem; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            nav.desktop-nav a::after { display: none; }
+            
+            .logo { font-size: 1.6rem; gap: 10px; }
+            .logo img { height: 50px; }
+            
+            main { padding: 1.5rem 1rem; }
+            .page-section { padding: 1.5rem; }
+            
+            .map-marker { width: 32px; height: 32px; font-size: 12px; } /* Larger pins for thumbs */
+            .toast-notification { bottom: 85px; } /* Above bottom nav */
+            @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 85px; opacity: 1;} }
+            @keyframes fadeout { from {bottom: 85px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        }
+
+        /* --- Footer --- */
+        footer { background: var(--primary); color: #ccc; text-align: center; padding: 2rem; margin-top: auto; border-top: 4px solid var(--secondary); }
         footer p { margin-bottom: 0.5rem; }
         footer strong { color: var(--secondary); }
     </style>
 </head>
 <body class="home-bg">
 
-    <!-- Navigation -->
     <header>
         <div class="nav-container">
             <a href="#" class="logo" onclick="navTo('home')">
                 <img src="https://i.imgur.com/YyRRmud.png" alt="EcoCampus Logo">
                 EcoCampus
             </a>
-            <nav>
+            
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </div>
+
+            <nav class="desktop-nav">
                 <ul id="nav-menu">
                     <li><a class="active" onclick="navTo('home')">Map Dashboard</a></li>
                     <li><a onclick="navTo('about')">About Us</a></li>
@@ -548,6 +391,15 @@
             </nav>
         </div>
     </header>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+        <a onclick="navTo('home')" class="active" id="mob-home"><span>🗺️</span>Map</a>
+        <a onclick="navTo('services')" id="mob-services"><span>⚙️</span>Services</a>
+        <a onclick="navTo('portfolio')" id="mob-portfolio"><span>📁</span>Projects</a>
+        <a onclick="navTo('faq')" id="mob-faq"><span>❓</span>FAQ</a>
+        <a onclick="navTo('contact')" id="mob-contact"><span>📞</span>Contact</a>
+    </nav>
 
     <main>
         <!-- Home / Interactive Map Section -->
@@ -570,13 +422,14 @@
 
                     <div id="binManagerArea" style="display: none; flex-direction: column; gap: 1rem; flex: 1;">
                         
-                        <!-- Expandable Images List -->
+                        <!-- Responsive Expandable Images Grid -->
                         <div id="imageGalleryWrapper" style="display: none; flex-direction: column; border: 1px solid #ddd; border-radius: 6px; overflow: hidden;">
                             <div style="padding: 0.8rem 1rem; background: #f8f9fa; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid transparent;" onclick="toggleGallery()">
                                 <span style="font-weight: 600; color: var(--primary);">📸 Location Images (<span id="imgCount">0</span>)</span>
                                 <span id="galleryIcon" style="font-weight: bold; color: var(--secondary); transition: transform 0.3s;">+</span>
                             </div>
-                            <div id="bldgImagesContainer" style="display: none; max-height: 350px; overflow-y: auto; padding: 10px; background: #fff; flex-direction: column; gap: 10px;">
+                            <!-- Responsive Grid applied here -->
+                            <div id="bldgImagesContainer" style="display: none; max-height: 350px; overflow-y: auto; padding: 10px; background: #fff; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
                                 <!-- Images dynamically inserted here -->
                             </div>
                         </div>
@@ -588,11 +441,20 @@
                     </div>
                 </div>
 
-                <!-- Interactive Map Area -->
-                <div class="map-wrapper">
-                    <div id="mapContainer" style="position: relative; width: 100%; font-size: 0;">
-                        <!-- Reference to the requested map image -->
-                        <img src="https://i.imgur.com/Jnoo5iF.jpg" alt="Campus Map" class="map-image" id="campusMap" draggable="false">
+                <!-- Interactive Map Area with Zoom Controls -->
+                <div class="map-outer-wrapper">
+                    <div class="map-scroll-area" id="mapScrollArea">
+                        <div id="mapContainer">
+                            <img src="https://i.imgur.com/Jnoo5iF.jpg" alt="Campus Map" class="map-image" id="campusMap" draggable="false">
+                            <!-- Pins inserted dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Zoom Controls -->
+                    <div class="map-controls">
+                        <button class="zoom-btn" onclick="zoomMap(50)" title="Zoom In">➕</button>
+                        <button class="zoom-btn" onclick="zoomMap(-50)" title="Zoom Out">➖</button>
+                        <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">🔄</button>
                     </div>
                 </div>
             </div>
@@ -656,7 +518,7 @@
             </div>
         </section>
 
-        <!-- Products Section -->
+        <!-- Products Section (Replacing alerts with Toast) -->
         <section id="products" class="page-section">
             <div class="section-header">
                 <h2>Eco-Products</h2>
@@ -667,19 +529,19 @@
                     <div style="background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee; font-size: 4rem;">🗑️</div>
                     <h3>Smart Segregation Bin Set</h3>
                     <p style="margin-bottom: 1.5rem;">Standard 3-piece color-coded bin set (Green, Brown, Red) designed for classrooms and faculty offices.</p>
-                    <button class="btn btn-secondary btn-block" onclick="alert('Added to inquiry cart!')">Request for Dept.</button>
+                    <button class="btn btn-secondary btn-block" onclick="showToast('Added to inquiry cart!')">Request for Dept.</button>
                 </div>
                 <div class="card" style="text-align: center;">
                     <div style="background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee; font-size: 4rem;">🛍️</div>
                     <h3>Upcycled Canvas Tote</h3>
                     <p style="margin-bottom: 1.5rem;">Durable tote bags made from recycled university banners. Perfect for replacing single-use plastics.</p>
-                    <button class="btn btn-block" onclick="alert('Redirecting to Student Center Store...')">Buy Now (₱150)</button>
+                    <button class="btn btn-block" onclick="showToast('Redirecting to Student Center Store...')">Buy Now (₱150)</button>
                 </div>
                 <div class="card" style="text-align: center;">
                     <div style="background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee; font-size: 4rem;">🌱</div>
                     <h3>Campus Compost Fertilizer</h3>
                     <p style="margin-bottom: 1.5rem;">Organic fertilizer generated purely from the campus cafeteria's biodegradable waste. Ideal for gardening.</p>
-                    <button class="btn btn-block" onclick="alert('Redirecting to Agriculture Dept...')">Get a Free Sample</button>
+                    <button class="btn btn-block" onclick="showToast('Sample request sent to Agriculture Dept!')">Get a Free Sample</button>
                 </div>
             </div>
         </section>
@@ -694,22 +556,12 @@
                 <div class="card">
                     <span class="tag tag-success">Completed • Jan 2026</span>
                     <h3>Bitan-ag Creek Clean-up Drive</h3>
-                    <p>A massive student-led initiative that successfully removed over 2 tons of residual waste from the creek bordering the campus. This project was conducted in partnership with the CDO local government.</p>
+                    <p>A massive student-led initiative that successfully removed over 2 tons of residual waste from the creek bordering the campus.</p>
                 </div>
                 <div class="card">
                     <span class="tag tag-success">Completed • May 2026</span>
                     <h3>Zero-Waste Intramurals 2026</h3>
-                    <p>Deployed 50 temporary segregation stations mapped live on the EcoCampus app, resulting in a 90% reduction of scattered litter compared to the previous sports season.</p>
-                </div>
-                <div class="card">
-                    <span class="tag tag-ongoing">Ongoing Phase 2</span>
-                    <h3>Solar-Powered Smart Bins</h3>
-                    <p>Currently piloting self-compacting, solar-powered garbage bins at the Open Field and Student Lounge to prevent overflow during peak hours.</p>
-                </div>
-                <div class="card">
-                    <span class="tag tag-ongoing">Continuous Integration</span>
-                    <h3>Cafeteria Biodegradable Conversion</h3>
-                    <p>A continuous partnership with food concessionaires to ensure 100% of organic food waste is diverted to the university's central composting facility.</p>
+                    <p>Deployed 50 temporary segregation stations mapped live on the EcoCampus app, resulting in a 90% reduction of scattered litter.</p>
                 </div>
             </div>
         </section>
@@ -721,25 +573,16 @@
                 <p>The latest updates, tips, and announcements regarding campus sustainability.</p>
             </div>
             <div style="max-width: 900px; margin: 0 auto; background: var(--bg-light); padding: 2rem; border-radius: 12px; border: 1px solid #eaeaea;">
-                
                 <div class="news-article">
                     <span class="news-date">September 25, 2026</span>
-                    <h3 class="news-title">How to Properly Segregate During the Upcoming Finals Week</h3>
-                    <p>With finals week approaching, campus coffee consumption is at an all-time high. Please remember that paper cups with plastic linings go to the <strong>Residual (Red)</strong> bins, while empty and rinsed plastic bottles belong in the <strong>Recyclable (Green)</strong> bins. Let's keep the study lounges clean!</p>
+                    <h3 class="news-title">Proper Segregation During Finals Week</h3>
+                    <p>Please remember that paper cups with plastic linings go to the <strong>Residual (Red)</strong> bins, while rinsed plastic bottles belong in the <strong>Recyclable (Green)</strong> bins.</p>
                 </div>
-
                 <div class="news-article">
                     <span class="news-date">September 20, 2026</span>
-                    <h3 class="news-title">EcoCampus Map Version 2.0 Officially Launches</h3>
-                    <p>We are thrilled to release the newly updated interactive map. Students can now drop custom pins on the map to register unmapped garbage bins. Help us crowd-source our campus infrastructure to ensure janitorial staff know exactly where waste is being collected.</p>
+                    <h3 class="news-title">EcoCampus Map Version 2.0 Launches</h3>
+                    <p>We are thrilled to release the newly updated interactive map. Help us crowd-source our campus infrastructure!</p>
                 </div>
-
-                <div class="news-article">
-                    <span class="news-date">August 15, 2026</span>
-                    <h3 class="news-title">Cagayan de Oro City Recognizes University's Zero-Waste Effort</h3>
-                    <p>The CDO City Environment and Natural Resources Office (CLENRO) awarded our university the "Green Innovator of the Year" for our digital tracking system, marking a huge win for student-led environmental tech.</p>
-                </div>
-
             </div>
         </section>
 
@@ -750,47 +593,24 @@
                 <p>Quick answers to common waste management queries on campus.</p>
             </div>
             <div style="max-width: 800px; margin: 0 auto;">
-                
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)">
                         <span>What exactly goes into the Recyclable (Green) bin?</span>
                         <span class="faq-icon">+</span>
                     </div>
                     <div class="faq-answer">
-                        <p>Only clean, dry, and recyclable materials. This includes plastic bottles (PET), aluminum cans, dry paper, and cardboard. <strong>Note:</strong> Please empty all liquids from bottles before throwing them away to prevent contamination!</p>
+                        <p>Only clean, dry, and recyclable materials. This includes plastic bottles (PET), aluminum cans, dry paper, and cardboard.</p>
                     </div>
                 </div>
-
-                <div class="faq-item">
-                    <div class="faq-question" onclick="toggleFaq(this)">
-                        <span>I found a garbage bin that isn't on the map. What should I do?</span>
-                        <span class="faq-icon">+</span>
-                    </div>
-                    <div class="faq-answer">
-                        <p>You can add it yourself! Go to the Map Dashboard, click on the exact location on the campus map to register the area, and use the "Add New Bin" form on the left panel to specify the bin type and its specific location.</p>
-                    </div>
-                </div>
-
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)">
                         <span>What goes into the Residual (Red) bin?</span>
                         <span class="faq-icon">+</span>
                     </div>
                     <div class="faq-answer">
-                        <p>Residual waste is anything that cannot be recycled or composted. This includes candy wrappers, soiled food packaging, sanitary napkins, wet wipes, and single-use sachets.</p>
+                        <p>Residual waste is anything that cannot be recycled or composted. This includes candy wrappers, soiled food packaging, and wet wipes.</p>
                     </div>
                 </div>
-
-                <div class="faq-item">
-                    <div class="faq-question" onclick="toggleFaq(this)">
-                        <span>Who manages the collection of these bins?</span>
-                        <span class="faq-icon">+</span>
-                    </div>
-                    <div class="faq-answer">
-                        <p>The University Auxiliary Services handles the physical collection. Data from this map helps them prioritize areas with high waste generation. Bins in high-traffic zones are emptied twice a day.</p>
-                    </div>
-                </div>
-
             </div>
         </section>
 
@@ -801,68 +621,30 @@
                 <p>Report a full bin, request a new setup, or partner with us for environmental drives.</p>
             </div>
             <div class="grid-2" style="max-width: 1000px; margin: 0 auto;">
-                
-                <!-- Contact Info -->
                 <div style="background: var(--primary); color: #fff; padding: 2.5rem; border-radius: 12px; display: flex; flex-direction: column; justify-content: center;">
                     <h3 style="color: var(--secondary); margin-bottom: 1.5rem; font-size: 1.8rem;">Get in Touch</h3>
-                    <p style="margin-bottom: 1.5rem;">Have questions about waste segregation or want to report an issue with the map? Our team is ready to help.</p>
-                    
-                    <div style="margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 15px;">
-                        <span style="font-size: 1.5rem;">📍</span>
-                        <div>
-                            <strong>Office Address:</strong><br>
-                            EcoCampus Headquarters, Student Center Bldg,<br>
-                            Claro M. Recto Avenue, Lapasan,<br>
-                            Cagayan de Oro City, 9000<br>
-                            Northern Mindanao, Philippines
-                        </div>
-                    </div>
-                    
                     <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 15px;">
                         <span style="font-size: 1.5rem;">📧</span>
-                        <div>
-                            <strong>Email:</strong><br>
-                            support@ecocampus.edu.ph
-                        </div>
+                        <div><strong>Email:</strong><br>support@ecocampus.edu.ph</div>
                     </div>
-
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <span style="font-size: 1.5rem;">📞</span>
-                        <div>
-                            <strong>Hotline (Auxiliary Services):</strong><br>
-                            (088) 856-1234 loc 555
-                        </div>
+                        <div><strong>Hotline:</strong><br>(088) 856-1234 loc 555</div>
                     </div>
                 </div>
-
-                <!-- Contact Form -->
                 <div style="background: var(--bg-light); padding: 2.5rem; border-radius: 12px; border: 1px solid #eaeaea;">
-                    <form onsubmit="event.preventDefault(); alert('Your message has been sent successfully! We will get back to you soon.'); this.reset();">
+                    <form onsubmit="event.preventDefault(); showToast('Your message has been sent successfully!'); this.reset();">
                         <div class="form-group">
                             <label for="name">Full Name</label>
                             <input type="text" id="name" class="form-control" required placeholder="Juan Dela Cruz">
                         </div>
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" class="form-control" required placeholder="juan@university.edu.ph">
-                        </div>
-                        <div class="form-group">
-                            <label for="subject">Subject</label>
-                            <select id="subject" class="form-control">
-                                <option>Report Full/Damaged Bin</option>
-                                <option>Request Bin Allocation</option>
-                                <option>Map System Bug/Feedback</option>
-                                <option>Partnerships / Drives</option>
-                            </select>
-                        </div>
                         <div class="form-group" style="margin-bottom: 1.5rem;">
                             <label for="message">Message</label>
-                            <textarea id="message" class="form-control" rows="5" required placeholder="Describe your concern here..."></textarea>
+                            <textarea id="message" class="form-control" rows="4" required placeholder="Describe your concern here..."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-block" style="font-size: 1.1rem; padding: 1rem;">Send Message</button>
+                        <button type="submit" class="btn btn-block">Send Message</button>
                     </form>
                 </div>
-
             </div>
         </section>
     </main>
@@ -878,12 +660,24 @@
         <img src="" alt="Expanded View" class="lightbox-img" id="lightboxImage">
     </div>
 
+    <!-- Toast Notification (Replaces native alerts) -->
+    <div id="toast" class="toast-notification">Notification</div>
+
     <script>
         // --- Navigation Logic ---
+        function toggleMenu() {
+            document.querySelector('nav.desktop-nav ul').classList.toggle('show');
+        }
+
         function navTo(sectionId) {
-            // Update Active Link
-            document.querySelectorAll('#nav-menu a').forEach(a => a.classList.remove('active'));
-            event.target.classList.add('active');
+            // Update Desktop Links
+            document.querySelectorAll('nav.desktop-nav a').forEach(a => a.classList.remove('active'));
+            if (event && event.target.tagName === 'A') event.target.classList.add('active');
+            
+            // Update Mobile Bottom Links
+            document.querySelectorAll('.mobile-bottom-nav a').forEach(a => a.classList.remove('active'));
+            const mobileBtn = document.getElementById(`mob-${sectionId}`);
+            if (mobileBtn) mobileBtn.classList.add('active');
             
             // Switch Sections
             document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
@@ -896,18 +690,43 @@
                 document.body.classList.remove('home-bg');
             }
             
+            // Close mobile top menu if open
+            const topMenu = document.querySelector('nav.desktop-nav ul');
+            if (topMenu.classList.contains('show')) topMenu.classList.remove('show');
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Toast Notification Logic (Mobile Friendly Alternative to Alert) ---
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.className = "toast-notification show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
         // --- FAQ Accordion Logic ---
         function toggleFaq(element) {
             const parent = element.parentElement;
-            // Close all others
             document.querySelectorAll('.faq-item').forEach(item => {
                 if(item !== parent) item.classList.remove('active');
             });
-            // Toggle current
             parent.classList.toggle('active');
+        }
+
+        // --- Map Zoom Logic ---
+        let currentZoom = 100; // Percentage
+        function zoomMap(change) {
+            currentZoom += change;
+            // Restrict zoom between 100% and 300%
+            currentZoom = Math.max(100, Math.min(currentZoom, 300));
+            document.getElementById('mapContainer').style.width = `${currentZoom}%`;
+        }
+
+        function resetZoom() {
+            currentZoom = 100;
+            document.getElementById('mapContainer').style.width = '100%';
+            document.getElementById('mapScrollArea').scrollTo(0,0);
         }
 
         // --- Data Structure for Buildings and Bins ---
@@ -962,10 +781,8 @@
         };
 
         const mapContainer = document.getElementById('mapContainer');
-        const campusMapImg = document.getElementById('campusMap');
         const buildingSelect = document.getElementById('buildingSelect');
         const binManagerArea = document.getElementById('binManagerArea');
-        const bldgImagesContainer = document.getElementById('bldgImagesContainer');
         const binListContainer = document.getElementById('binListContainer');
         const currentBldgName = document.getElementById('currentBldgName');
 
@@ -979,11 +796,7 @@
         // --- Dropdown Management ---
         function updateDropdown() {
             buildingSelect.innerHTML = '<option value="">-- Choose a location --</option>';
-            
-            const sortedKeys = Object.keys(mapData).sort((a, b) => 
-                mapData[a].name.localeCompare(mapData[b].name)
-            );
-
+            const sortedKeys = Object.keys(mapData).sort((a, b) => mapData[a].name.localeCompare(mapData[b].name));
             sortedKeys.forEach(key => {
                 const opt = document.createElement('option');
                 opt.value = key;
@@ -994,7 +807,6 @@
 
         function selectBuilding() {
             const selectedId = buildingSelect.value;
-            
             document.querySelectorAll('.map-marker').forEach(m => m.classList.remove('active'));
 
             if (!selectedId) {
@@ -1008,40 +820,29 @@
             binManagerArea.style.display = 'flex';
             currentBldgName.textContent = mapData[selectedId].name;
             
-            // Handle specific building image display
+            // Handle Gallery Population
             const galleryWrapper = document.getElementById('imageGalleryWrapper');
             const galleryContainer = document.getElementById('bldgImagesContainer');
             const imgCountSpan = document.getElementById('imgCount');
             galleryContainer.innerHTML = '';
             
-            let hasImages = false;
-            let imagesArray = [];
-
             if (mapData[selectedId].images && mapData[selectedId].images.length > 0) {
-                imagesArray = mapData[selectedId].images;
-                hasImages = true;
-            } else if (mapData[selectedId].image) {
-                imagesArray = [mapData[selectedId].image];
-                hasImages = true;
-            }
-            
-            if (hasImages) {
-                imgCountSpan.textContent = imagesArray.length;
+                imgCountSpan.textContent = mapData[selectedId].images.length;
                 galleryWrapper.style.display = 'flex';
-                // Close gallery by default to save space
+                // Close by default
                 galleryContainer.style.display = 'none';
                 document.getElementById('galleryIcon').textContent = '+';
-                document.getElementById('galleryIcon').style.transform = 'rotate(0deg)';
                 galleryWrapper.firstElementChild.style.borderBottomColor = 'transparent';
 
-                imagesArray.forEach(imgSrc => {
+                mapData[selectedId].images.forEach(imgSrc => {
                     const img = document.createElement('img');
                     img.src = imgSrc;
                     img.alt = "Building view";
                     img.style.width = '100%';
-                    img.style.height = 'auto';
+                    img.style.height = '100px'; // Thumbnail height constraint
+                    img.style.objectFit = 'cover';
                     img.style.display = 'block';
-                    img.style.borderRadius = '6px';
+                    img.style.borderRadius = '4px';
                     img.style.border = '2px solid var(--primary)';
                     img.style.cursor = 'pointer';
                     img.title = 'Click to expand';
@@ -1053,6 +854,13 @@
             }
             
             renderBinList(selectedId);
+
+            // Auto-scroll logic for Mobile devices
+            if (window.innerWidth <= 992) {
+                setTimeout(() => {
+                    document.querySelector('.control-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 200);
+            }
         }
 
         // --- Marker Rendering ---
@@ -1089,16 +897,14 @@
             const bins = mapData[buildingId].bins;
 
             if (bins.length === 0) {
-                binListContainer.innerHTML = '<p style="text-align:center; color:#888; font-style:italic; margin-top:2rem;">No bins recorded yet.</p>';
+                binListContainer.innerHTML = '<p style="text-align:center; color:#888; font-style:italic; margin-top:1rem;">No bins recorded yet.</p>';
                 return;
             }
 
             bins.forEach(bin => {
                 const item = document.createElement('div');
                 item.className = 'bin-item';
-                
                 const badgeClass = bin.type.toLowerCase();
-                
                 item.innerHTML = `
                     <div class="bin-details">
                         <strong>${bin.desc}</strong>
@@ -1109,16 +915,14 @@
             });
         }
 
-        window.onload = initMap;
-
-        // --- Image Gallery & Lightbox Logic ---
+        // --- Gallery Toggle ---
         function toggleGallery() {
             const container = document.getElementById('bldgImagesContainer');
             const icon = document.getElementById('galleryIcon');
             const header = document.getElementById('imageGalleryWrapper').firstElementChild;
             
             if (container.style.display === 'none') {
-                container.style.display = 'flex';
+                container.style.display = 'grid';
                 icon.style.transform = 'rotate(45deg)';
                 header.style.borderBottomColor = '#ddd';
             } else {
@@ -1129,10 +933,8 @@
         }
         
         function openLightbox(src) {
-            const overlay = document.getElementById('lightboxOverlay');
-            const img = document.getElementById('lightboxImage');
-            img.src = src;
-            overlay.classList.add('active');
+            document.getElementById('lightboxImage').src = src;
+            document.getElementById('lightboxOverlay').classList.add('active');
         }
         
         function closeLightbox(e) {
@@ -1141,6 +943,7 @@
             }
         }
 
+        window.onload = initMap;
     </script>
 </body>
 </html>
